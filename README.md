@@ -12,11 +12,16 @@
 ## 快速开始
 
 ```bash
-git clone <本仓库 URL>
+git clone git@github.com:Zhy-3DEnv/mesh-volume-clouds.git
+# 或 HTTPS：
+# git clone https://github.com/Zhy-3DEnv/mesh-volume-clouds.git
+
 # 用 Godot 4.7 打开项目根目录（含 project.godot）
 # 主场景：demo/mesh_clouds_demo.tscn
 # 按 F5 运行
 ```
+
+仓库地址：https://github.com/Zhy-3DEnv/mesh-volume-clouds
 
 操作：自动沿航点飞行；点击屏幕暂停/继续；右上角显示 FPS。
 
