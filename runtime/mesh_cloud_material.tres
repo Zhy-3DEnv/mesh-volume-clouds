@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://7osmi0qyt1j2"]
+
+[ext_resource type="Shader" uid="uid://1r44fv5cije4" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud.gdshader" id="1_shader"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/albedo = Color(0.65431565, 0.83078206, 0.973708, 1)
+shader_parameter/shadow_color = Color(0.66259354, 0.4634341, 0.9844299, 1)
+shader_parameter/underside_color = Color(0.25103405, 0.6223705, 0.68876684, 1)
+shader_parameter/cavity_strength = 0.5990000284525
+shader_parameter/height_blend = 1.0
+shader_parameter/brightness = 0.86900001519843
+shader_parameter/lit_boost = 0.5
+shader_parameter/light_wrap = 0.5050000239875
+shader_parameter/ambient_strength = 1.0
+shader_parameter/rim_color = Color(0.82274264, 0.45708996, 0.07952387, 1)
+shader_parameter/rim_strength = 1.182000056145
+shader_parameter/rim_power = 3.4250001389375
+shader_parameter/rim_lit_bias = 0.35
+shader_parameter/soft_displace_normals = false
+shader_parameter/noise_amp = 0.1650000078375
+shader_parameter/noise_scale = 4.0
+shader_parameter/noise_speed = 0.2000000095
+shader_parameter/noise_detail = 0.27200001292
+shader_parameter/anim_time = 0.0

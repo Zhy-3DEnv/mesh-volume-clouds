@@ -1,9 +1,9 @@
 [gd_scene load_steps=16 format=3]
 
-[ext_resource type="Script" path="res://demo/mesh_clouds/mesh_cloud_cluster.gd" id="1_cluster"]
-[ext_resource type="Script" path="res://demo/mesh_clouds/mesh_cloud_sun_sync.gd" id="2_sun"]
-[ext_resource type="Script" path="res://demo/flythrough_camera.gd" id="3_fly"]
-[ext_resource type="Shader" path="res://demo/mesh_clouds/mesh_cloud.gdshader" id="4_shader"]
+[ext_resource type="Script" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud_cluster.gd" id="1_cluster"]
+[ext_resource type="Script" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud_sun_sync.gd" id="2_sun"]
+[ext_resource type="Script" path="res://addons/mesh_volume_clouds/demo/flythrough_camera.gd" id="3_fly"]
+[ext_resource type="Shader" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud.gdshader" id="4_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_cloud"]
 render_priority = 0

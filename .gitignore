@@ -1,28 +1,3 @@
-# Godot 4
-.godot/
+﻿.godot/
 *.translation
-
-# Imports / caches
-.import/
-export.cfg
-export_credentials.cfg
-
-# Builds & OS junk
-build/*.apk
-build/*.aab
-build/*.aligned.apk
-build/*.stripped.apk
-*.log
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Editor / IDE
-.vscode/
-.idea/
-*.tmp
-*~
-
-# Android local
-local.properties
-.android/
+export_presets.cfg

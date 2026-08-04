@@ -1,0 +1,36 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dm3nsyb3owrfp"]
+
+[ext_resource type="Shader" uid="uid://djtwnnsx4t2w2" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud_sky_style.gdshader" id="1_shader"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_shader")
+shader_parameter/base_color = Color(1, 1, 1, 0.92)
+shader_parameter/underside_color = Color(0.78, 0.82, 0.95, 1)
+shader_parameter/emissive_color = Color(0.10662446, 0.53242886, 0.6512238, 0)
+shader_parameter/noise_color_strength = 0.55
+shader_parameter/noise_color_mix = 0.7
+shader_parameter/emissive_noise = 0.2
+shader_parameter/brightness = 1.05
+shader_parameter/soft_edge = 1.15
+shader_parameter/soft_edge_power = 2.2
+shader_parameter/edge_erosion = 0.35
+shader_parameter/depth_fade_enabled = false
+shader_parameter/depth_fade_distance = 0.4
+shader_parameter/lit_boost = 1.35
+shader_parameter/light_wrap = 0.62
+shader_parameter/ambient_strength = 1.15
+shader_parameter/translucency_color = Color(1, 0.96, 0.9, 1)
+shader_parameter/translucency_strength = 0.85
+shader_parameter/rim_strength = 0.4
+shader_parameter/rim_power = 3.0
+shader_parameter/noise_amp = 0.22
+shader_parameter/noise_scale = 2.4
+shader_parameter/noise_strength = 0.35
+shader_parameter/voronoi_scale = 1.6
+shader_parameter/voronoi_strength = 0.65
+shader_parameter/noise_speed = 0.18
+shader_parameter/voronoi_speed = 0.06
+shader_parameter/wind_direction = Vector3(-1, -0.25, -0.3)
+shader_parameter/wind_speed = 1.0
+shader_parameter/anim_time = 0.0

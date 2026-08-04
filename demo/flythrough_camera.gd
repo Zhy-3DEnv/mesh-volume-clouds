@@ -1,6 +1,6 @@
 extends Camera3D
 
-## Looped waypoint fly-through for local-cloud demo. Tap to pause/resume.
+## 演示用航点循环飞行相机；点击屏幕暂停/继续。
 
 @export var cruise_speed: float = 900.0
 @export var look_smooth: float = 3.5
