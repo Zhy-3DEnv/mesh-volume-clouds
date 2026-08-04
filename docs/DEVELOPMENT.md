@@ -44,10 +44,10 @@ MeshCloudsDemo (Node3D + MeshCloudSunSync)
 
 | 文件 | SOP | 约三角数 |
 |------|-----|----------|
-| `meshes/cloud_shape_a.obj` | `/obj/geo1/normal1` | ~10k |
-| `meshes/cloud_shape_a_lod.obj` | `/obj/geo1/normal_lod` | ~1k |
+| `meshes/cloud_shape_a.glb` | `/obj/geo1/normal_lod0` | ~50k tris |
+| `meshes/cloud_shape_a_lod.glb` | `/obj/geo1/normal_lod1` | ~10k tris |
 
-`MeshCloudCluster.cloud_mesh` 指定后按 AABB 归一化到与 SphereMesh(radius=0.5) 相同尺度。  
+`cloud_mesh` / `cloud_mesh_lod` **直接拖 GLB** 即可。Godot 导入 GLB 易弄坏法线，Cluster 会在解析时用同名 `.vnbin`（或拓扑重算）修复。  
 LOD：`lod_enabled` + `cloud_mesh_lod` 时，相对相机距离 > `lod_distance` 换低模；回切带 `lod_hysteresis`；只换 `MeshInstance3D.mesh`，不重建整团。
 
 材质卡参考：**高调实体爆米花云**（亮白/淡紫固有色 + `diffuse_lambert_wrap`，**接收场景灯光与环境光**）。
@@ -60,7 +60,7 @@ LOD：`lod_enabled` + `cloud_mesh_lod` 时，相对相机距离 > `lod_distance`
 - 生成的 puff 不写入 `.tscn`，由 `@tool` 实时重建
 - 修改插件脚本后需开关一次插件以重载
 
-重新导出：Houdini `/out/mcp_export_hi`、`/out/mcp_export_lod` → Execute。
+重新导出：输出 **GLB** 到 `meshes/cloud_shape_a.glb` / `cloud_shape_a_lod.glb`（Houdini ROP 或等价流程）。
 
 ## 3. Shader / 云团参数
 

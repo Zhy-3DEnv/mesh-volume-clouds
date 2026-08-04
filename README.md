@@ -21,8 +21,8 @@ mesh_volume_clouds/
 ├── plugin.gd
 ├── README.md
 ├── meshes/                     # Houdini 造型网格
-│   ├── cloud_shape_a.obj       # ~10k tris
-│   └── cloud_shape_a_lod.obj   # ~1k tris
+│   ├── cloud_shape_a.glb (+ .vnbin)       # 直接引用；vnbin 修复导入法线
+│   └── cloud_shape_a_lod.glb (+ .vnbin)
 ├── runtime/
 │   ├── mesh_cloud.gdshader                 # 实体风（不透明）
 │   ├── mesh_cloud_sky_style.gdshader       # Sky 风格（透明软边，吸收 Unity SkyClouds）

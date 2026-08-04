@@ -48,17 +48,21 @@ const _SPHERE_HALF_EXTENT: float = 0.5
 		seed = v
 		_request_rebuild()
 
-## 近景高模网格。为空则回退程序 SphereMesh。
-@export var cloud_mesh: Mesh:
+## 近景高模。可为 Mesh，或 GLB（PackedScene，取首个 MeshInstance3D）。
+@export var cloud_mesh: Resource:
 	set(v):
 		cloud_mesh = v
+		_hi_mesh_cache = null
+		_hi_src_cache = null
 		notify_property_list_changed()
 		_request_rebuild()
 
-## 远景低模。需与 Cloud Mesh 同时指定，并开启 LOD 后按距离切换。
-@export var cloud_mesh_lod: Mesh:
+## 远景低模。可为 Mesh 或 GLB；需与 Cloud Mesh 同时指定并开启 LOD。
+@export var cloud_mesh_lod: Resource:
 	set(v):
 		cloud_mesh_lod = v
+		_lod_mesh_cache = null
+		_lod_src_cache = null
 		_using_lod = false
 		_update_lod(true)
 
@@ -95,6 +99,11 @@ var _rebuild_queued: bool = false
 ## 未指定 cloud_material 时的本地回退材质。
 var _fallback_material: ShaderMaterial
 var _using_lod: bool = false
+## GLB/PackedScene 解析后的 Mesh 缓存。
+var _hi_mesh_cache: Mesh
+var _lod_mesh_cache: Mesh
+var _hi_src_cache: Resource
+var _lod_src_cache: Resource
 
 
 func _ready() -> void:
@@ -183,9 +192,170 @@ func _ensure_puffs_use_shared_material() -> void:
 				mi.material_override = cloud_material
 
 
+func _resource_as_mesh(res: Resource) -> Mesh:
+	if res == null:
+		return null
+	if res is Mesh:
+		return res as Mesh
+	if res is PackedScene:
+		var root: Node = (res as PackedScene).instantiate()
+		var found: Mesh = _find_first_mesh(root)
+		root.free()
+		if found == null:
+			return null
+		# Godot 导入 GLB 常会弄坏法线；复制一份并尽量用旁路 .vnbin / 拓扑重算修复。
+		return _sanitize_imported_mesh(found, res.resource_path)
+	push_warning("MeshCloudCluster: 无法从资源解析 Mesh：%s" % str(res))
+	return null
+
+
+func _find_first_mesh(node: Node) -> Mesh:
+	if node is MeshInstance3D:
+		var mi: MeshInstance3D = node as MeshInstance3D
+		if mi.mesh != null:
+			return mi.mesh
+	for child: Node in node.get_children():
+		var found: Mesh = _find_first_mesh(child)
+		if found != null:
+			return found
+	return null
+
+
+func _sanitize_imported_mesh(src: Mesh, glb_path: String) -> Mesh:
+	var lookup: Dictionary = {}
+	if not glb_path.is_empty():
+		var vnbin_path: String = glb_path.get_basename() + ".vnbin"
+		if FileAccess.file_exists(vnbin_path):
+			lookup = _load_vnbin_lookup(vnbin_path)
+	var out := ArrayMesh.new()
+	for s: int in src.get_surface_count():
+		var arrays: Array = src.surface_get_arrays(s)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+		if verts == null or verts.is_empty():
+			continue
+		var normals: PackedVector3Array
+		if not lookup.is_empty():
+			normals = _normals_from_lookup(verts, lookup)
+		else:
+			normals = _compute_smooth_normals(
+				verts,
+				arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+			)
+		arrays[Mesh.ARRAY_NORMAL] = normals
+		out.add_surface_from_arrays(src.surface_get_primitive_type(s), arrays)
+	return out
+
+
+func _normals_from_lookup(verts: PackedVector3Array, lookup: Dictionary) -> PackedVector3Array:
+	var normals := PackedVector3Array()
+	normals.resize(verts.size())
+	for i: int in verts.size():
+		var key: Vector3i = _quant_key(verts[i])
+		if lookup.has(key):
+			normals[i] = lookup[key] as Vector3
+			continue
+		var found: bool = false
+		for dx: int in range(-1, 2):
+			for dy: int in range(-1, 2):
+				for dz: int in range(-1, 2):
+					var k2 := Vector3i(key.x + dx, key.y + dy, key.z + dz)
+					if lookup.has(k2):
+						normals[i] = lookup[k2] as Vector3
+						found = true
+						break
+				if found:
+					break
+			if found:
+				break
+		if not found:
+			normals[i] = verts[i].normalized() if verts[i].length_squared() > 1e-8 else Vector3.UP
+	return normals
+
+
+func _load_vnbin_lookup(path: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return {}
+	var count: int = f.get_32()
+	if count <= 0 or count > 5_000_000:
+		f.close()
+		return {}
+	var positions := PackedVector3Array()
+	positions.resize(count)
+	for i: int in count:
+		positions[i] = Vector3(f.get_float(), f.get_float(), f.get_float())
+	var lookup: Dictionary = {}
+	for i: int in count:
+		var n := Vector3(f.get_float(), f.get_float(), f.get_float())
+		if n.length_squared() > 1e-12:
+			n = n.normalized()
+		else:
+			n = Vector3.UP
+		lookup[_quant_key(positions[i])] = n
+	f.close()
+	return lookup
+
+
+func _quant_key(v: Vector3) -> Vector3i:
+	return Vector3i(roundi(v.x * 10000.0), roundi(v.y * 10000.0), roundi(v.z * 10000.0))
+
+
+func _compute_smooth_normals(verts: PackedVector3Array, indices: PackedInt32Array) -> PackedVector3Array:
+	var normals := PackedVector3Array()
+	normals.resize(verts.size())
+	for i: int in normals.size():
+		normals[i] = Vector3.ZERO
+	if indices == null or indices.is_empty():
+		var i: int = 0
+		while i + 2 < verts.size():
+			var fn: Vector3 = (verts[i + 1] - verts[i]).cross(verts[i + 2] - verts[i])
+			normals[i] += fn
+			normals[i + 1] += fn
+			normals[i + 2] += fn
+			i += 3
+	else:
+		var i: int = 0
+		while i + 2 < indices.size():
+			var ia: int = indices[i]
+			var ib: int = indices[i + 1]
+			var ic: int = indices[i + 2]
+			var fn: Vector3 = (verts[ib] - verts[ia]).cross(verts[ic] - verts[ia])
+			normals[ia] += fn
+			normals[ib] += fn
+			normals[ic] += fn
+			i += 3
+	for i: int in normals.size():
+		if normals[i].length_squared() < 1e-12:
+			normals[i] = Vector3.UP
+		else:
+			normals[i] = normals[i].normalized()
+	return normals
+
+
+func _cached_hi_mesh() -> Mesh:
+	if cloud_mesh == null:
+		return null
+	if _hi_mesh_cache != null and _hi_src_cache == cloud_mesh:
+		return _hi_mesh_cache
+	_hi_src_cache = cloud_mesh
+	_hi_mesh_cache = _resource_as_mesh(cloud_mesh)
+	return _hi_mesh_cache
+
+
+func _cached_lod_mesh() -> Mesh:
+	if cloud_mesh_lod == null:
+		return null
+	if _lod_mesh_cache != null and _lod_src_cache == cloud_mesh_lod:
+		return _lod_mesh_cache
+	_lod_src_cache = cloud_mesh_lod
+	_lod_mesh_cache = _resource_as_mesh(cloud_mesh_lod)
+	return _lod_mesh_cache
+
+
 func _resolve_hi_mesh() -> Mesh:
-	if cloud_mesh != null:
-		return cloud_mesh
+	var shaped: Mesh = _cached_hi_mesh()
+	if shaped != null:
+		return shaped
 	var sphere := SphereMesh.new()
 	sphere.radial_segments = mesh_segments
 	sphere.rings = maxi(mesh_segments / 2, 6)
@@ -196,12 +366,14 @@ func _resolve_hi_mesh() -> Mesh:
 
 func _resolve_active_mesh() -> Mesh:
 	if _should_use_lod():
-		return cloud_mesh_lod
+		var lod: Mesh = _cached_lod_mesh()
+		if lod != null:
+			return lod
 	return _resolve_hi_mesh()
 
 
 func _lod_available() -> bool:
-	return lod_enabled and cloud_mesh != null and cloud_mesh_lod != null
+	return lod_enabled and _cached_hi_mesh() != null and _cached_lod_mesh() != null
 
 
 func _should_use_lod() -> bool:
@@ -232,8 +404,9 @@ func _get_view_camera() -> Camera3D:
 
 func _mesh_scale_norm(mesh: Mesh) -> float:
 	## 尺度始终以高模（或球体）为基准，避免 LOD 切换时整体缩放跳动。
-	var ref: Mesh = cloud_mesh if cloud_mesh != null else mesh
-	if cloud_mesh == null and mesh is SphereMesh:
+	var shaped: Mesh = _cached_hi_mesh()
+	var ref: Mesh = shaped if shaped != null else mesh
+	if shaped == null and mesh is SphereMesh:
 		return 1.0
 	var aabb: AABB = ref.get_aabb()
 	var half: float = maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z)) * 0.5
@@ -270,7 +443,7 @@ func _update_lod(force: bool) -> void:
 	if not force and want_lod == _using_lod:
 		return
 	_using_lod = want_lod
-	_apply_mesh_to_puffs(cloud_mesh_lod if want_lod else cloud_mesh)
+	_apply_mesh_to_puffs(_cached_lod_mesh() if want_lod else _cached_hi_mesh())
 
 
 func _rebuild() -> void:
@@ -290,7 +463,8 @@ func _rebuild() -> void:
 	# 先按当前相机距离选网格，避免首帧闪高模。
 	var want_lod: bool = _lod_available() and _should_use_lod()
 	_using_lod = want_lod
-	var puff_mesh: Mesh = cloud_mesh_lod if want_lod else hi_mesh
+	var lod_mesh: Mesh = _cached_lod_mesh()
+	var puff_mesh: Mesh = lod_mesh if want_lod and lod_mesh != null else hi_mesh
 
 	for i: int in puff_count:
 		var mi := MeshInstance3D.new()

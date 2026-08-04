@@ -4,8 +4,8 @@
 [ext_resource type="Script" uid="uid://c0vdlbnj4ttcv" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud_sun_sync.gd" id="2_sun"]
 [ext_resource type="Script" uid="uid://dbrf8pajknx5h" path="res://addons/mesh_volume_clouds/demo/flythrough_camera.gd" id="3_fly"]
 [ext_resource type="Material" uid="uid://dm3nsyb3owrfp" path="res://addons/mesh_volume_clouds/runtime/mesh_cloud_sky_style_material.tres" id="4_mat"]
-[ext_resource type="ArrayMesh" uid="uid://duw82aedxqiwf" path="res://addons/mesh_volume_clouds/meshes/cloud_shape_a.obj" id="5_mesh"]
-[ext_resource type="ArrayMesh" uid="uid://b8fiur4cncaxm" path="res://addons/mesh_volume_clouds/meshes/cloud_shape_a_lod.obj" id="6_lod"]
+[ext_resource type="PackedScene" uid="uid://gh7d71ca6gie" path="res://addons/mesh_volume_clouds/meshes/cloud_shape_a.glb" id="5_mesh"]
+[ext_resource type="PackedScene" uid="uid://22250s7kh8il" path="res://addons/mesh_volume_clouds/meshes/cloud_shape_a_lod.glb" id="6_lod"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.55, 0.62, 0.95, 1)
